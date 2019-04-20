@@ -1,6 +1,14 @@
 import Config from './config';
 import Sprite from './sprite';
 
+const JumpState =
+{
+	null: 0,
+	startJump: 1,
+	isJumping: 2,
+	endJump: 3
+}
+
 class Autumn
 {
 	constructor( renderer )
@@ -14,6 +22,9 @@ class Autumn
 		this.width = 16;
 		this.height = 25;
 		this.bounce = 0.14;
+		this.jumpState = JumpState.null;
+		this.startSpeed = 0.16;
+		this.topSpeed = 2;
 		renderer.addSprite( 'autumn', new Sprite( 'img/autumn.png', 32, 32, this.width, this.height ) );
 	}
 
@@ -26,20 +37,26 @@ class Autumn
 
 	updateX( input, block )
 	{
-		if ( input.pressed.right )
+		if ( this.testOnGround( block ) )
 		{
-			this.accx = 0.25;
+			this.startSpeed = ( input.held.run ) ? 0.32 : 0.16;
+			this.topSpeed = ( input.held.run ) ? 4 : 2;
 		}
-		else if ( input.pressed.left )
+
+		if ( input.held.right )
 		{
-			this.accx = -0.25;
+			this.accx = this.startSpeed;
+		}
+		else if ( input.held.left )
+		{
+			this.accx = -this.startSpeed;
 		}
 		else
 		{
 			this.accx = 0;
 			this.vx /= 1.05;
 		}
-		this.vx = Math.max( Math.min( this.vx + this.accx, 4 ), -4 );
+		this.vx = Math.max( Math.min( this.vx + this.accx, this.topSpeed ), -this.topSpeed );
 
 		let nextX = this.x + this.vx;
 		const xTest = ( this.vx < 0 ) ? nextX : nextX + this.width;
@@ -53,31 +70,58 @@ class Autumn
 
 	updateY( input, block )
 	{
-		if ( input.pressed.down )
+		switch ( this.jumpState )
 		{
-			this.accy = 0.25;
+			case ( JumpState.null ):
+			{
+				if ( input.pressed.jump && this.testOnGround( block ) )
+				{
+					this.jumpState = JumpState.startJump;
+					this.accy = -1;
+				}
+				else
+				{
+					this.accy = 0.5;
+				}
+			}
+			break;
+			case ( JumpState.startJump ):
+			{
+				if ( block.yInSolid( this.y - 1, this.x, this.width ) )
+				{
+					this.jumpState = JumpState.null;
+					this.accy = 0;
+					this.vy = 0;
+				}
+				else if ( !input.held.jump || this.vy <= -6.5 )
+				{
+					this.jumpState = JumpState.null;
+				}
+				else
+				{
+					this.accy = -1;
+				}
+			}
+			break;
 		}
-		else if ( input.pressed.up )
-		{
-			this.accy = -0.25;
-		}
-		else
-		{
-			this.accy = 0;
-			this.vy /= 1.05;
-		}
-		this.vy = Math.max( Math.min( this.vy + this.accy, 4 ), -4 );
 
+		this.vy = Math.max( Math.min( this.vy + this.accy, 4 ), -6.5 );
+
+		this.handleYCollision( block );
+	}
+
+	testOnGround( block )
+	{
+		return block.yInSolid( this.y + this.height, this.x, this.width );
+	}
+
+	handleYCollision( block )
+	{
 		let nextY = this.y + this.vy;
 		if ( this.vy > 0 )
 		{
 			const testY = nextY + this.height;
-			if ( testY >= Config.WindowHeightPixels )
-			{
-				this.vy *= -this.bounce;
-				nextY = this.y + this.vy;
-			}
-			else if ( block.yInSolid( testY, this.x, this.width ) )
+			if ( testY < Config.WindowHeightPixels && block.yInSolid( testY, this.x, this.width ) )
 			{
 				this.vy = 0;
 				nextY = ( Math.ceil( nextY / Config.BlockSize ) + 1 ) * Config.BlockSize - this.height;
@@ -85,12 +129,7 @@ class Autumn
 		}
 		else if ( this.vy < 0 )
 		{
-			if ( nextY < 0 )
-			{
-				this.vy *= -this.bounce;
-				nextY = this.y + this.vy;
-			}
-			else if ( block.yInSolid( nextY, this.x, this.width ) )
+			if ( nextY >= 0 && block.yInSolid( nextY, this.x, this.width ) )
 			{
 				this.vy *= -this.bounce;
 				nextY = this.y + this.vy;

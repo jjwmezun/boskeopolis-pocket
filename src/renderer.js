@@ -14,11 +14,8 @@ class Renderer
 
 	addSprite( name, sprite )
 	{
-		sprite.image.onload = function()
-		{
-			this.spriteList.push( sprite );
-			this.spriteMap[ name ] = this.spriteList.length - 1;
-		}.bind( this );
+		this.spriteList.push( sprite );
+		this.spriteMap[ name ] = this.spriteList.length - 1;
 	}
 
 	getSprite( name )

@@ -1,16 +1,26 @@
 import Config from './config';
 import Sprite from './sprite';
+import BlockTypes from './block-types';
 
 class Block
 {
-	constructor( x, y, w, h, renderer )
+	constructor( map, renderer )
 	{
-		this.initializeImage( x, y, w, h, renderer );
-		this.x = x;
-		this.y = y;
-		this.width = w;
-		this.height = h;
+		this.width = renderer.canvas.width;
+		this.height = renderer.canvas.height;
 		this.initializeBlockGrid( renderer.canvas.width, renderer.canvas.height );
+		let image = new Image();
+		image.src = 'img/tileset.png';
+		image.onload = function()
+		{
+			let i = 0;
+			for ( const block of map.blocks )
+			{
+				this.initializeImage( block, renderer, image, i );
+				this.addToBlockGrid( block );
+				i++;
+			}
+		}.bind( this );
 	}
 
 	initializeBlockGrid( width, height )
@@ -21,41 +31,46 @@ class Block
 			this.blockGrid.push( [] );
 			for ( let x = 0; x < width; x++ )
 			{
-				let value = ( y >= this.y && y < this.y + this.height && x >= this.x && x < this.x + this.width ) ? 1 : 0;
-				this.blockGrid[ y ].push( value );
+				this.blockGrid[ y ].push( 0 );
 			}
 		}
 	}
 
-	initializeImage( xOrigin, yOrigin, wBlocks, hBlocks, renderer )
+	addToBlockGrid( block )
 	{
+		if ( 'solid' in block && block.solid )
+		{
+			const w = ( 'w' in block ) ? block.w : 1;
+			const h = ( 'h' in block ) ? block.h : 1;
+			const startX = Math.max( 0, block.x );
+			const startY = Math.max( 0, block.y );
+			const endX = Math.min( this.width, block.x + w );
+			const endY = Math.min( this.height, block.y + h );
+			for ( let y = startY; y < endY; y++ )
+			{
+				for ( let x = startX; x < endX; x++ )
+				{
+					this.blockGrid[ y ][ x ] = 1;
+				}
+			}
+		}
+	}
+
+	initializeImage( block, renderer, image, i )
+	{
+		const wBlocks = ( 'w' in block ) ? block.w : 1;
+		const hBlocks = ( 'h' in block ) ? block.h : 1;
+		const xOrigin = block.x;
+		const yOrigin = block.y;
 		const width = wBlocks * Config.BlockSize;
 		const height = hBlocks * Config.BlockSize;
 		const tempCanvas = document.getElementById( 'tempCanvas' );
 		const tempContext = tempCanvas.getContext( '2d' );
 		tempCanvas.height = height;
 		tempCanvas.width = width;
-		const blockSprite = new Sprite( 'img/urban.png', 0, 0, Config.BlockSize, Config.BlockSize, 0, 0 );
-		blockSprite.image.onload = function()
-		{
-			for ( let y = 0; y < tempCanvas.height; y += Config.BlockSize )
-			{
-				blockSprite.current_frame_x = ( y === 0 ) ? 0 : Config.BlockSize;
-				for ( let i = 0; i < tempCanvas.width; i += Config.BlockSize )
-				{
-					blockSprite.x = i;
-					blockSprite.y = y;
-					tempContext.drawImage
-					(
-						blockSprite.image,
-						blockSprite.current_frame_x, blockSprite.current_frame_y, blockSprite.width, blockSprite.height,
-						blockSprite.x, blockSprite.y, blockSprite.width, blockSprite.height
-					);
-				}
-			}
-			const data = tempCanvas.toDataURL();
-			renderer.addSprite( 'block0', new Sprite( data, xOrigin * Config.BlockSize, yOrigin * Config.BlockSize, width, height ) );
-		}
+		BlockTypes[ block.type ]( tempContext, image, width, height );
+		const data = tempCanvas.toDataURL();
+		renderer.addSprite( 'block' + i, new Sprite( data, xOrigin * Config.BlockSize, yOrigin * Config.BlockSize, width, height ) );
 	}
 
 	xInSolid( x, y, height )
