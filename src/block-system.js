@@ -2,7 +2,7 @@ import Config from './config';
 import Sprite from './sprite';
 import BlockTypes from './block-types';
 
-class Block
+class BlockSystem
 {
 	constructor( map, renderer )
 	{
@@ -38,7 +38,8 @@ class Block
 
 	addToBlockGrid( block )
 	{
-		if ( 'solid' in block && block.solid )
+		const blockType = BlockTypes[ block.type ];
+		if ( 'solid' in blockType && blockType.solid )
 		{
 			const w = ( 'w' in block ) ? block.w : 1;
 			const h = ( 'h' in block ) ? block.h : 1;
@@ -68,7 +69,7 @@ class Block
 		const tempContext = tempCanvas.getContext( '2d' );
 		tempCanvas.height = height;
 		tempCanvas.width = width;
-		BlockTypes[ block.type ]( tempContext, image, width, height );
+		BlockTypes[ block.type ].generator( tempContext, image, width, height );
 		const data = tempCanvas.toDataURL();
 		renderer.addSprite( 'block' + i, new Sprite( data, xOrigin * Config.BlockSize, yOrigin * Config.BlockSize, width, height ) );
 	}
@@ -79,6 +80,10 @@ class Block
 		const xBlocks = Math.floor( x / Config.BlockSize );
 		const yStartBlocks = Math.floor( y / Config.BlockSize );
 		const yEndBlocks = Math.floor( ( y + height ) / Config.BlockSize );
+		if ( xBlocks < 0 || yStartBlocks < 0 || yEndBlocks > this.blockGrid.length )
+		{
+			return false;
+		}
 		for ( let y = yStartBlocks; y <= yEndBlocks; y++ )
 		{
 			if ( this.blockGrid[ y ][ xBlocks ] === 1 )
@@ -94,6 +99,10 @@ class Block
 		const yBlocks = Math.floor( y / Config.BlockSize );
 		const xStartBlocks = Math.floor( x / Config.BlockSize );
 		const xEndBlocks = Math.ceil( ( x + width ) / Config.BlockSize );
+		if ( yBlocks < 0 || xStartBlocks < 0 || xEndBlocks > this.blockGrid[ 0 ].length )
+		{
+			return false;
+		}
 		for ( let x = xStartBlocks; x < xEndBlocks; x++ )
 		{
 			if ( this.blockGrid[ yBlocks ][ x ] === 1 )
@@ -105,4 +114,4 @@ class Block
 	}
 }
 
-export default Block;
+export default BlockSystem;

@@ -25,19 +25,23 @@ class Autumn
 		this.jumpState = JumpState.null;
 		this.startSpeed = 0.16;
 		this.topSpeed = 2;
+		this.nextPosition = { x: this.x, y: this.y };
 		renderer.addSprite( 'autumn', new Sprite( 'img/autumn.png', 32, 32, this.width, this.height ) );
 	}
 
-	update( input, renderer, block )
+	update( input, renderer, map )
 	{
-		this.updateX( input, block );
-		this.updateY( input, block );
+		this.updateX( input, map );
+		this.updateY( input, map );
+		this.nextPosition = map.testInteraction( this, this.nextPosition );
+		this.x = this.nextPosition.x;
+		this.y = this.nextPosition.y;
 		this.updateGraphics( renderer );
 	}
 
-	updateX( input, block )
+	updateX( input, map )
 	{
-		if ( this.testOnGround( block ) )
+		if ( map.testOnGround( this ) )
 		{
 			this.startSpeed = ( input.held.run ) ? 0.32 : 0.16;
 			this.topSpeed = ( input.held.run ) ? 4 : 2;
@@ -58,23 +62,22 @@ class Autumn
 		}
 		this.vx = Math.max( Math.min( this.vx + this.accx, this.topSpeed ), -this.topSpeed );
 
-		let nextX = this.x + this.vx;
-		const xTest = ( this.vx < 0 ) ? nextX : nextX + this.width;
-		if ( xTest < 0 || xTest >= Config.WindowWidthPixels || block.xInSolid( xTest, this.y, this.height ) )
+		this.nextPosition.x = this.x + this.vx;
+		const xTest = ( this.vx < 0 ) ? this.nextPosition.x : this.nextPosition.x + this.width;
+		if ( xTest < 0 || xTest >= Config.WindowWidthPixels || map.blockSystem.xInSolid( xTest, this.y, this.height ) )
 		{
 			this.vx *= -this.bounce;
-			nextX = this.x + this.vx;
+			this.nextPosition.x = this.x + this.vx;
 		}
-		this.x = nextX;
 	}
 
-	updateY( input, block )
+	updateY( input, map )
 	{
 		switch ( this.jumpState )
 		{
 			case ( JumpState.null ):
 			{
-				if ( input.pressed.jump && this.testOnGround( block ) )
+				if ( input.pressed.jump && map.testOnGround( this ) )
 				{
 					this.jumpState = JumpState.startJump;
 					this.accy = -1;
@@ -87,7 +90,7 @@ class Autumn
 			break;
 			case ( JumpState.startJump ):
 			{
-				if ( block.yInSolid( this.y - 1, this.x, this.width ) )
+				if ( map.blockSystem.yInSolid( this.y - 1, this.x, this.width ) )
 				{
 					this.jumpState = JumpState.null;
 					this.accy = 0;
@@ -107,35 +110,29 @@ class Autumn
 
 		this.vy = Math.max( Math.min( this.vy + this.accy, 4 ), -6.5 );
 
-		this.handleYCollision( block );
+		this.handleYCollision( map );
 	}
 
-	testOnGround( block )
+	handleYCollision( map )
 	{
-		return block.yInSolid( this.y + this.height, this.x, this.width );
-	}
-
-	handleYCollision( block )
-	{
-		let nextY = this.y + this.vy;
+		this.nextPosition.y = this.y + this.vy;
 		if ( this.vy > 0 )
 		{
-			const testY = nextY + this.height;
-			if ( testY < Config.WindowHeightPixels && block.yInSolid( testY, this.x, this.width ) )
+			const testY = this.nextPosition.y + this.height;
+			if ( testY < Config.WindowHeightPixels && map.blockSystem.yInSolid( testY, this.x, this.width ) )
 			{
 				this.vy = 0;
-				nextY = ( Math.ceil( nextY / Config.BlockSize ) + 1 ) * Config.BlockSize - this.height;
+				this.nextPosition.y = ( Math.ceil( this.nextPosition.y / Config.BlockSize ) + 1 ) * Config.BlockSize - this.height;
 			}
 		}
 		else if ( this.vy < 0 )
 		{
-			if ( nextY >= 0 && block.yInSolid( nextY, this.x, this.width ) )
+			if ( this.nextPosition.y >= 0 && map.blockSystem.yInSolid( this.nextPosition.y, this.x, this.width ) )
 			{
 				this.vy *= -this.bounce;
-				nextY = this.y + this.vy;
+				this.nextPosition.y = this.y + this.vy;
 			}
 		}
-		this.y = nextY;
 	}
 
 	updateGraphics( renderer )
