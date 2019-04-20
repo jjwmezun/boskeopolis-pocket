@@ -29,14 +29,24 @@ class Autumn
 		renderer.addSprite( 'autumn', new Sprite( 'img/autumn.png', 32, 32, this.width, this.height ) );
 	}
 
-	update( input, renderer, map )
+	right()
+	{
+		return this.x + this.width;
+	}
+
+	bottom()
+	{
+		return this.y + this.height;
+	}
+
+	update( input, renderer, map, camera )
 	{
 		this.updateX( input, map );
 		this.updateY( input, map );
 		this.nextPosition = map.testInteraction( this, this.nextPosition );
 		this.x = this.nextPosition.x;
 		this.y = this.nextPosition.y;
-		this.updateGraphics( renderer );
+		this.updateGraphics( renderer, camera );
 	}
 
 	updateX( input, map )
@@ -64,7 +74,7 @@ class Autumn
 
 		this.nextPosition.x = this.x + this.vx;
 		const xTest = ( this.vx < 0 ) ? this.nextPosition.x : this.nextPosition.x + this.width;
-		if ( xTest < 0 || xTest >= Config.WindowWidthPixels || map.blockSystem.xInSolid( xTest, this.y, this.height ) )
+		if ( xTest < 0 || xTest >= map.widthPixels() || map.blockSystem.xInSolid( xTest, this.y, this.height ) )
 		{
 			this.vx *= -this.bounce;
 			this.nextPosition.x = this.x + this.vx;
@@ -119,7 +129,7 @@ class Autumn
 		if ( this.vy > 0 )
 		{
 			const testY = this.nextPosition.y + this.height;
-			if ( testY < Config.WindowHeightPixels && map.blockSystem.yInSolid( testY, this.x, this.width ) )
+			if ( testY < map.heightPixels() && map.blockSystem.yInSolid( testY, this.x, this.width ) )
 			{
 				this.vy = 0;
 				this.nextPosition.y = ( Math.ceil( this.nextPosition.y / Config.BlockSize ) + 1 ) * Config.BlockSize - this.height;
@@ -135,13 +145,13 @@ class Autumn
 		}
 	}
 
-	updateGraphics( renderer )
+	updateGraphics( renderer, camera )
 	{
 		const image = renderer.getSprite( 'autumn' );
 		if ( image )
 		{
-			image.x = Math.floor( this.x );
-			image.y = Math.floor( this.y );
+			image.x = Math.floor( this.x ) - camera.x;
+			image.y = Math.floor( this.y ) - camera.y;
 		}
 	}
 };

@@ -1,3 +1,4 @@
+import Config from './config';
 import BlockSystem from './block-system';
 import BlockTypes from './block-types';
 
@@ -10,13 +11,15 @@ class Map
 		this.blocks =
 		[
 			{
+				name: "ground",
 				type: "ground",
 				x: 0,
 				y: 17,
-				w: 25,
+				w: 50,
 				h: 3
 			},
 			{
+				name: "brick1",
 				type: "brick1",
 				x: 1,
 				y: 12,
@@ -24,11 +27,13 @@ class Map
 				h: 5
 			},
 			{
+				name: "hydrant1",
 				type: "hydrant",
 				x: 9,
 				y: 16
 			},
 			{
+				name: "brick2",
 				type: "brick1",
 				x: 11,
 				y: 14,
@@ -36,6 +41,7 @@ class Map
 				h: 3
 			},
 			{
+				name: "brick3",
 				type: "brick1",
 				x: 23,
 				y: 11,
@@ -45,6 +51,29 @@ class Map
 		];
 
 		this.blockSystem = new BlockSystem( this, renderer );
+	}
+
+	widthPixels()
+	{
+		return this.width * Config.BlockSize;
+	}
+
+	heightPixels()
+	{
+		return this.height * Config.BlockSize;
+	}
+
+	update( camera, renderer )
+	{
+		for ( const block of this.blocks )
+		{
+			const blockGraphics = renderer.getSprite( block.name );
+			if ( blockGraphics )
+			{
+				blockGraphics.x = block.x * Config.BlockSize - camera.x;
+				blockGraphics.y = block.y * Config.BlockSize - camera.y;
+			}
+		}
 	}
 
 	testInteraction( autumn, nextPosition )

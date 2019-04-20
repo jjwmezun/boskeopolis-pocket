@@ -6,9 +6,9 @@ class BlockSystem
 {
 	constructor( map, renderer )
 	{
-		this.width = renderer.canvas.width;
-		this.height = renderer.canvas.height;
-		this.initializeBlockGrid( renderer.canvas.width, renderer.canvas.height );
+		this.width = map.width;
+		this.height = map.height;
+		this.initializeBlockGrid( map.width, map.height );
 		let image = new Image();
 		image.src = 'img/tileset.png';
 		image.onload = function()
@@ -21,6 +21,7 @@ class BlockSystem
 				i++;
 			}
 		}.bind( this );
+		console.log( this.blockGrid );
 	}
 
 	initializeBlockGrid( width, height )
@@ -71,7 +72,7 @@ class BlockSystem
 		tempCanvas.width = width;
 		BlockTypes[ block.type ].generator( tempContext, image, width, height );
 		const data = tempCanvas.toDataURL();
-		renderer.addSprite( 'block' + i, new Sprite( data, xOrigin * Config.BlockSize, yOrigin * Config.BlockSize, width, height ) );
+		renderer.addSprite( block.name, new Sprite( data, xOrigin * Config.BlockSize, yOrigin * Config.BlockSize, width, height ) );
 	}
 
 	xInSolid( x, y, height )
@@ -80,7 +81,7 @@ class BlockSystem
 		const xBlocks = Math.floor( x / Config.BlockSize );
 		const yStartBlocks = Math.floor( y / Config.BlockSize );
 		const yEndBlocks = Math.floor( ( y + height ) / Config.BlockSize );
-		if ( xBlocks < 0 || yStartBlocks < 0 || yEndBlocks > this.blockGrid.length )
+		if ( xBlocks < 0 || yStartBlocks < 0 || yEndBlocks > this.blockGrid.length || xBlocks > this.blockGrid[ 0 ].length )
 		{
 			return false;
 		}
@@ -99,7 +100,7 @@ class BlockSystem
 		const yBlocks = Math.floor( y / Config.BlockSize );
 		const xStartBlocks = Math.floor( x / Config.BlockSize );
 		const xEndBlocks = Math.ceil( ( x + width ) / Config.BlockSize );
-		if ( yBlocks < 0 || xStartBlocks < 0 || xEndBlocks > this.blockGrid[ 0 ].length )
+		if ( yBlocks < 0 || xStartBlocks < 0 || xEndBlocks > this.blockGrid[ 0 ].length || yBlocks > this.blockGrid.length )
 		{
 			return false;
 		}
