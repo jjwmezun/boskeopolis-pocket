@@ -4,7 +4,7 @@ import BlockTypes from './block-types';
 
 class Map
 {
-	constructor( renderer )
+	constructor( renderer, autumn )
 	{
 		this.width = 50;
 		this.height = 20;
@@ -50,7 +50,7 @@ class Map
 			}
 		];
 
-		this.blockSystem = new BlockSystem( this, renderer );
+		this.blockSystem = new BlockSystem( this, renderer, autumn );
 	}
 
 	widthPixels()

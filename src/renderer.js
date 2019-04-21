@@ -40,13 +40,12 @@ class Renderer
 		if ( name in this.spriteMap )
 		{
 			const spriteIndex = this.spriteMap[ name ];
-			const sprite = this.spriteList[ spriteIndex ];
-			for ( let i = spriteIndex; i < this.spriteList.length - 1; i++ )
+			this.spriteList.splice( this.spriteList.length - 1, 0, this.spriteList.splice( spriteIndex, 1)[ 0 ] );
+			for ( let i = spriteIndex + 1; i < this.spriteList.length; i++ )
 			{
-				this.spriteList[ i ] = this.spriteList[ i + 1 ];
-				this.spriteMap[ this.getSpriteNameByIndex[ i + 1 ] ] = i;
+				const thisName = this.getSpriteNameByIndex( i );
+				this.spriteMap[ thisName ]--;
 			}
-			this.spriteList[ this.spriteList.length - 1 ] = sprite;
 			this.spriteMap[ name ] = this.spriteList.length - 1;
 		}
 	}

@@ -8,10 +8,9 @@ import Map from './map';
 const input = new Input();
 const renderer = new Renderer( Config.WindowWidthPixels, Config.WindowHeightPixels );
 const autumn = new Autumn( renderer );
-const map = new Map( renderer );
+const map = new Map( renderer, autumn );
 const camera = new Camera( 0, 6 * Config.BlockSize );
 
-renderer.bringSpriteToFront( 'autumn' );
 window.requestAnimationFrame( execute );
 function execute()
 {

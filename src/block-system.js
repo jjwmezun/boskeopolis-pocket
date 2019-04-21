@@ -4,7 +4,7 @@ import BlockTypes from './block-types';
 
 class BlockSystem
 {
-	constructor( map, renderer )
+	constructor( map, renderer, autumn )
 	{
 		this.width = map.width;
 		this.height = map.height;
@@ -20,8 +20,8 @@ class BlockSystem
 				this.addToBlockGrid( block );
 				i++;
 			}
+			renderer.bringSpriteToFront( 'autumn' );
 		}.bind( this );
-		console.log( this.blockGrid );
 	}
 
 	initializeBlockGrid( width, height )
